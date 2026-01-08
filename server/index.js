@@ -44,10 +44,16 @@ app.use(
   })
 );
 
+// ✅ Health check
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, time: new Date().toISOString() });
+});
+
+
 // ✅ SESSION MIDDLEWARE (חייב לפני routes)
 app.use(
   session({
-    name: "sid", // cookie name
+    name: "sid",
     secret: process.env.SESSION_SECRET || "dev_secret",
     resave: false,
     saveUninitialized: false,
@@ -56,16 +62,14 @@ app.use(
       collectionName: "sessions",
     }),
     cookie: {
-    httpOnly: true,
-    sameSite: "none",  // ✅ חובה כדי לאפשר cookie בין דומיינים (Vercel ↔ Render)
-    secure: true,      // ✅ חובה כי זה HTTPS
-    maxAge: 1000 * 60 * 60 * 2,
-  }
-,
-
-
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 1000 * 60 * 60 * 2,
+    },
   })
 );
+
 
 // Routes
 app.use("/api/auth", authRoutes);
