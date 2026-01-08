@@ -3,15 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
 /**
- * Real QR scanner component (camera) - stable in DEV StrictMode.
- *
- * Props:
- * - open: boolean
- * - onResult: (text: string) => void
- * - onError: (msg: string) => void
- * - fps?: number
- * - qrbox?: number
- * - facingMode?: "environment" | "user"
+ * Real QR scanner component (camera) - stable in DEV StrictMode + better iOS behavior.
  */
 export default function QrScanner({
   open,
@@ -55,15 +47,27 @@ export default function QrScanner({
     }
   }
 
+  // ✅ Better iOS compatibility: try exact environment, fallback to normal
+  function buildCameraConfig() {
+    if (facingMode === "environment") {
+      return { facingMode: { exact: "environment" } };
+    }
+    return { facingMode: "user" };
+  }
+
   async function safeStop() {
     clearStartTimer();
 
     // serialize stop with mutex
     opRef.current = opRef.current.then(async () => {
       const s = scannerRef.current;
-      if (!s) return;
+      if (!s) {
+        // also reset dedupe when closed
+        lastTextRef.current = "";
+        lastTimeRef.current = 0;
+        return;
+      }
 
-      // If not running, still try clear to release video element
       try {
         if (runningRef.current) {
           try {
@@ -76,6 +80,10 @@ export default function QrScanner({
         } catch {}
         scannerRef.current = null;
         runningRef.current = false;
+
+        // ✅ reset dedupe when stopping
+        lastTextRef.current = "";
+        lastTimeRef.current = 0;
       }
     });
 
@@ -86,7 +94,6 @@ export default function QrScanner({
     // serialize start with mutex
     opRef.current = opRef.current.then(async () => {
       if (!open) return; // open might have flipped while waiting
-
       if (scannerRef.current || runningRef.current) return;
 
       if (!isSecureContextOk()) {
@@ -113,9 +120,12 @@ export default function QrScanner({
       const s = new Html5Qrcode(regionId);
       scannerRef.current = s;
 
+      const config = buildCameraConfig();
+
       try {
+        // 1) Try "exact" environment on iOS
         await s.start(
-          { facingMode },
+          config,
           {
             fps,
             qrbox: { width: qrbox, height: qrbox },
@@ -138,20 +148,48 @@ export default function QrScanner({
         );
 
         runningRef.current = true;
-      } catch (e) {
-        // Cleanly release if start failed
+      } catch (e1) {
+        // 2) Fallback: try non-exact environment (some devices reject "exact")
         try {
-          await s.stop();
-        } catch {}
-        try {
-          await s.clear();
-        } catch {}
-        scannerRef.current = null;
-        runningRef.current = false;
+          await s.start(
+            { facingMode },
+            {
+              fps,
+              qrbox: { width: qrbox, height: qrbox },
+              aspectRatio: 1.0,
+              disableFlip: true,
+            },
+            (decodedText) => {
+              const t = String(decodedText || "").trim();
+              if (!t) return;
 
-        onError?.(
-          "Camera failed. Make sure: (1) HTTPS or localhost, (2) allow camera permission in the browser, (3) Windows camera privacy is enabled."
-        );
+              const now = Date.now();
+              if (t === lastTextRef.current && now - lastTimeRef.current < 1200) return;
+
+              lastTextRef.current = t;
+              lastTimeRef.current = now;
+
+              onResult?.(t);
+            },
+            () => {}
+          );
+
+          runningRef.current = true;
+        } catch (e2) {
+          // Cleanly release if start failed
+          try {
+            await s.stop();
+          } catch {}
+          try {
+            await s.clear();
+          } catch {}
+          scannerRef.current = null;
+          runningRef.current = false;
+
+          onError?.(
+            "Camera failed. Make sure: (1) HTTPS or localhost, (2) allow camera permission in the browser, (3) iOS: allow camera for Safari/Chrome."
+          );
+        }
       } finally {
         setStarting(false);
       }
