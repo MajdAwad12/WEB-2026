@@ -1,8 +1,6 @@
 // ===============================
 // file: client/src/pages/exams/ExamPage.jsx
 // ===============================
-const API_BASE = import.meta.env.VITE_API_BASE
-
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import RocketLoader from "../../components/loading/RocketLoader.jsx";
@@ -12,6 +10,7 @@ const TABS = [
   { key: "live", label: "Live" },
   { key: "upcoming", label: "Upcoming" },
 ];
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 function classify(exam) {
   const now = Date.now();
