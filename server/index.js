@@ -1,3 +1,4 @@
+//server/index.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -52,12 +53,13 @@ app.use(
       mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
     }),
-    cookie: {
-      httpOnly: true,
-      sameSite: "lax", // dev: lax הכי פשוט
-      secure: false,   // dev: false (ב-https זה true)
-      maxAge: 1000 * 60 * 60 * 2, // 2 hours
-    },
+   cookie: {
+    httpOnly: true,
+    sameSite: "none", 
+    secure: true,    
+    maxAge: 1000 * 60 * 60 * 2, 
+  },
+
   })
 );
 
