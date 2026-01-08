@@ -21,6 +21,8 @@ import studentRoutes from "./src/routes/student.routes.js";
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", 1);
+
 
 // Body + CORS
 app.use(express.json());  
@@ -53,12 +55,13 @@ app.use(
       mongoUrl: process.env.MONGO_URI,
       collectionName: "sessions",
     }),
-   cookie: {
-    httpOnly: true,
-    sameSite: "none", 
-    secure: true,    
-    maxAge: 1000 * 60 * 60 * 2, 
-  },
+    cookie: {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 1000 * 60 * 60 * 2,
+    },
+
 
   })
 );
