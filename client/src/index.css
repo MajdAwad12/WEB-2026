@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+
+/* reset עדין */
+* {
+  box-sizing: border-box;
+}
+
+/* חשוב: Tailwind שולט בצבעים */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* אנימציית shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* שיפור UX */
+input, button {
+  transition: all 0.2s ease-in-out;
+}
