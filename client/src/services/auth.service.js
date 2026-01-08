@@ -1,5 +1,5 @@
 // client/src/services/auth.service.js
-const API_BASE = "" ;
+
 async function handle(res) {
   let data = {};
   try {
@@ -16,46 +16,51 @@ async function handle(res) {
   return data;
 }
 
-export async function loginUser({ username, password }) {
-  const res = await fetch(`${API_BASE}/api/auth/login`, {
+async function http(url, options = {}) {
+  const headers = { ...(options.headers || {}) };
+
+  if (options.body && !headers["Content-Type"]) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const res = await fetch(url, {
+    ...options,
+    headers,
+    credentials: "include", // ✅ critical
+  });
+
+  return handle(res);
+}
+
+// =========================
+// Auth
+// =========================
+
+export function loginUser({ username, password }) {
+  return http("/api/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ username, password }),
   });
-  return handle(res);
 }
 
-export async function getMe() {
-  const res = await fetch(`${API_BASE}/api/auth/me`, {
+export function getMe() {
+  return http("/api/auth/me", {
     method: "GET",
-    credentials: "include",
   });
-  return handle(res);
 }
 
-export async function logout() {
-  const res = await fetch(`${API_BASE}/api/auth/logout`, {
+export function logout() {
+  return http("/api/auth/logout", {
     method: "POST",
-    credentials: "include",
   });
-  return handle(res);
 }
 
-
-
-
-
-export async function registerUser(payload) {
-  const res = await fetch(`${API_BASE}/api/auth/register`, {
+export function registerUser(payload) {
+  return http("/api/auth/register", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify(payload),
   });
-  return handle(res);
 }
-
 
 export async function checkUsername(username) {
   const u = String(username || "").trim();
@@ -64,14 +69,10 @@ export async function checkUsername(username) {
   const params = new URLSearchParams();
   params.set("username", u);
 
-  const res = await fetch(`${API_BASE}/api/auth/check-username?${params.toString()}`, {
+  const data = await http(`/api/auth/check-username?${params.toString()}`, {
     method: "GET",
-    credentials: "include",
   });
 
-  const data = await handle(res);
-
-  // Normalize response
   const taken =
     data === true ||
     data?.taken === true ||
@@ -81,48 +82,11 @@ export async function checkUsername(username) {
   return { taken: Boolean(taken), exists: Boolean(taken) };
 }
 
-/**
- * ✅ Used by RegisterPage.jsx
- * Returns boolean
- */
 export async function isUsernameTaken(username) {
   const data = await checkUsername(username);
   return Boolean(data.taken || data.exists);
 }
 
-/**
- * Optional:
- * You DON'T have email-check endpoint right now.
- * We'll keep a safe helper that always returns false until you implement it.
- */
-export async function isEmailTaken(_email) {
+export async function isEmailTaken() {
   return false;
-}
-
-/**
- * (Optional) Backward compatibility if you later implement:
- * GET /api/auth/exists?username=...&email=...
- * Return: { exists: boolean } or { existsUsername: boolean, existsEmail: boolean }
- *
- * Not used right now.
- */
-export async function existsUser({ username, email }) {
-  const params = new URLSearchParams();
-  if (username) params.set("username", username);
-  if (email) params.set("email", email);
-
-  const res = await fetch(`${API_BASE}/api/auth/exists?${params.toString()}`, {
-    method: "GET",
-    credentials: "include",
-  });
-
-  const data = await handle(res);
-
-  if (typeof data.exists === "boolean") return data; // { exists }
-  if (typeof data.taken === "boolean") return { exists: data.taken };
-
-  const existsUsername = Boolean(data.existsUsername);
-  const existsEmail = Boolean(data.existsEmail);
-
-  return { exists: existsUsername || existsEmail, existsUsername, existsEmail };
 }
