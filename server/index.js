@@ -92,9 +92,11 @@ if (process.env.NODE_ENV === "production") {
   app.use(express.static(distPath));
 
   // For React Router (SPA): return index.html for any unknown route
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
+  // For React Router (SPA): return index.html for any unknown route
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(distPath, "index.html"));
+});
+
 }
 
 
