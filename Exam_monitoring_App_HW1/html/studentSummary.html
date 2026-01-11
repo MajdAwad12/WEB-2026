@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Monitoring APP | My Exam Summary</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-700 via-sky-600 to-cyan-400 flex items-center justify-center p-4">
+
+  <!-- MAIN CONTAINER (same style like login) -->
+  <div class="w-full max-w-5xl">
+
+    <!-- Header like login -->
+    <div class="text-center mb-6">
+      <div class="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mx-auto mb-4">
+        <span class="text-3xl text-white">⏰</span>
+      </div>
+      <h1 class="text-3xl font-extrabold text-white tracking-tight">
+        Exam Monitoring APP
+      </h1>
+      <p class="text-sm text-indigo-100 mt-2">
+        Student Read-Only Exam Summary
+      </p>
+    </div>
+
+    <!-- CARD -->
+    <div class="bg-white/95 backdrop-blur rounded-3xl shadow-2xl p-6 border border-indigo-50">
+
+      <!-- top row: title + logout -->
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4 border-b border-slate-200 pb-3">
+        <div>
+          <h2 class="text-xl font-bold text-slate-900">My Exams</h2>
+          <p id="studentName" class="text-xs text-slate-500 mt-1">
+            Loading student…
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span id="roleBadge"
+                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+            Student
+          </span>
+          <button
+            id="logoutBtn"
+            class="text-xs font-semibold px-3 py-1 rounded-full border border-red-300 text-red-600 bg-red-50
+                   hover:bg-red-100 hover:text-red-700 transition"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- info bar -->
+      <div class="mb-4">
+        <div class="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-indigo-50 text-[11px] text-indigo-700">
+          <span>ℹ️</span>
+          <span>
+            This page is read-only. You can see when you arrived, when you finished,
+            extra time and any incidents that were recorded during the exam.
+          </span>
+        </div>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <section id="emptyState" class="hidden">
+        <div class="w-full flex flex-col items-center justify-center py-10 text-center">
+          <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+            <span class="text-3xl text-slate-400">📄</span>
+          </div>
+          <h3 class="text-lg font-semibold text-slate-800 mb-1">No exam summaries yet</h3>
+          <p class="text-sm text-slate-500 max-w-md">
+            After your exams are processed, you will see here a history of your exams and what was recorded.
+          </p>
+        </div>
+      </section>
+
+      <!-- EXAMS LIST -->
+      <section id="examsList" class="space-y-4">
+        <!-- Cards injected by JS -->
+      </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-4 text-center text-[11px] text-indigo-100">
+      Braude College • Web Course – Exam Monitoring Project • Student View
+    </footer>
+  </div>
+
+  <!-- JS -->
+  <script src="../js/fakeData.js"></script>
+  <script src="../js/studentSummary.js"></script>
+</body>
+</html>

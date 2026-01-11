@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Monitoring APP | Dashboard</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-700 via-sky-600 to-cyan-400 flex items-center justify-center p-4">
+
+  <!-- MAIN CONTAINER -->
+<div id="appShell"
+     class="w-full max-w-[1800px] h-[95vh] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl flex overflow-hidden relative">
+
+    <!-- =============== LEFT SIDEBAR =============== -->
+    <aside class="w-72 bg-slate-50 border-r border-slate-200 flex flex-col">
+
+      <!-- Logo -->
+      <div class="p-6 border-b border-slate-200">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center text-3xl text-white shadow-md">
+            📊
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-800 leading-tight">
+              Exam Monitoring
+            </h1>
+            <p class="text-[12px] text-slate-500">
+              Live Dashboard
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- User info -->
+      <div class="px-6 py-4 border-b border-slate-200 text-sm">
+        <p class="text-slate-600">Logged in as</p>
+        <p id="userFullName" class="text-base font-semibold text-slate-900">-</p>
+        <p id="userRole" class="text-[11px] text-sky-700 uppercase mt-1">-</p>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-4 py-6 space-y-2 text-[15px] font-medium">
+
+        <a
+          href="dashboard.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-sky-600 text-white shadow-sm"
+        >
+          📊 <span>Dashboard</span>
+        </a>
+
+        <a
+          href="exams.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📚 <span>Exam Management</span>
+        </a>
+
+        <a
+          id="navAttendance"
+          href="#"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          ✅ <span>Attendance</span>
+        </a>
+
+
+        <a
+          href="rooms.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          🗺️ <span>Classrooms Map</span>
+        </a>
+
+        <a
+          id="reportsLink"
+          href="reports.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📑 <span>Reports</span>
+        </a>
+
+        
+
+      </nav>
+
+      <!-- Logout -->
+      <div class="p-6 border-t border-slate-200 text-sm">
+        <button
+          id="btnLogout"
+          class="w-full px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-md"
+        >
+          Log out
+        </button>
+      </div>
+    </aside>
+
+    <!-- =============== MAIN CONTENT =============== -->
+    <main class="flex-1 flex flex-col bg-white">
+
+      <!-- Top bar -->
+      <header class="h-20 border-b border-slate-200 flex items-center justify-between px-10 bg-white">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">
+            Hello, <span id="headerUserName">User</span> 👋
+          </h2>
+          <p class="text-sm text-slate-500 mt-1" id="headerUserSubtitle">
+            Role: -
+          </p>
+        </div>
+        <div class="text-right text-sm text-slate-500">
+          <p id="currentDate">Today: -</p>
+          <p class="text-[11px] text-slate-400">
+            Braude College • Exam Monitoring App
+          </p>
+        </div>
+      </header>
+
+      <!-- Dashboard content -->
+      <section class="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50">
+
+        <!-- Title -->
+        <div>
+          <h3 class="text-3xl font-bold text-slate-900 mb-2">
+            Live Dashboard – Active Exam 
+          </h3>
+          <p class="text-sm text-slate-600 max-w-2xl">
+            Overview of attendance and incidents for the current active exam, based on
+            <code>currentExamStatus</code> from <code>fakeData.js</code>.
+          </p>
+        </div>
+
+        <!-- Overview + time info -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
+          <!-- Current exam overview card -->
+          <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <div class="flex items-center gap-2 mb-2">
+              <h4 class="text-lg font-bold text-slate-900">
+                Current Exam Overview
+              </h4>
+              <span class="flex items-center text-[11px] px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1 animate-pulse"></span>
+                Live 
+              </span>
+            </div>
+
+            <p class="text-xs text-slate-500 mb-3">
+              Course, room, lecturer, supervisors and number of registered students.
+            </p>
+
+            <!-- 👇 פה המרצה יראה Tabs של כיתות, המשגיח לא -->
+            <div id="roomTabs" class="flex flex-wrap gap-2 mb-3 hidden">
+              <!-- Filled by JS for lecturer -->
+            </div>
+
+            <div id="currentExamInfo" class="text-sm text-slate-700 space-y-1">
+              <!-- Filled by dashboard.js -->
+            </div>
+          </div>
+
+          <!-- Time & status small cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
+            <div class="bg-indigo-50 rounded-2xl px-4 py-3 flex flex-col justify-center">
+              <p class="text-xs text-slate-500">Today</p>
+              <p id="todayDate" class="text-xl font-bold text-indigo-700">--</p>
+            </div>
+            <div class="bg-amber-50 rounded-2xl px-4 py-3 flex flex-col justify-center">
+              <p class="text-xs text-slate-500">Simulated Time</p>
+              <p id="currentTime" class="text-xl font-bold text-amber-700">--</p>
+            </div>
+            <div class="bg-rose-50 rounded-2xl px-4 py-3 flex flex-col justify-center">
+              <p class="text-xs text-slate-500">Time Remaining</p>
+              <p id="remainingtime" class="text-xl font-bold text-rose-700">--</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Status chart -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col">
+            <h4 class="text-lg font-semibold text-slate-900 mb-1">
+              Students Status – Active Exam
+            </h4>
+            <p class="text-xs text-slate-500 mb-4">
+              Present, temporary out of room, or absent.
+            </p>
+            <div class="h-64">
+              <canvas id="statusBar"></canvas>
+            </div>
+            <div id="statusSummary" class="mt-4 text-sm text-slate-700 bg-slate-50 rounded-xl p-3"></div>
+          </div>
+
+          <!-- Incidents chart -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col">
+            <h4 class="text-lg font-semibold text-slate-900 mb-1">
+              Incidents & Exceptions
+            </h4>
+            <p class="text-xs text-slate-500 mb-4">
+              Based on the <code>incidents</code> array (bathroom breaks, late arrivals, etc.).
+            </p>
+            <div class="h-64">
+              <canvas id="incidentsBar"></canvas>
+            </div>
+            <div id="incidentsSummary" class="mt-4 text-sm text-slate-700 bg-slate-50 rounded-xl p-3"></div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+              Live Alerts & Smart Notifications
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">
+                Supervisor / Lecturer view (simulation)
+              </span>
+            </h4>
+            <span class="text-xs text-slate-500">
+              Generated from currentExamStatus and its incidents.
+            </span>
+          </div>
+          <ul id="alertsList" class="space-y-3 text-sm">
+            <!-- Filled by dashboard.js -->
+          </ul>
+        </div>
+
+      </section>
+    </main>
+
+  </div>
+
+  <!-- Scripts (note ../js/) -->
+  <script src="../js/fakeData.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+  window.EXAM_APP_CONTEXT = chatbotSimulations.dashboard_supervisor;
+</script>
+  <script src="../js/chatbot.js"></script>
+
+
+</body>
+</html>

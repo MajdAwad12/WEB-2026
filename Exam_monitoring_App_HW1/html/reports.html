@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Monitoring APP | Reports & History</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-700 via-sky-600 to-cyan-400 flex items-center justify-center p-4">
+
+  <!-- MAIN CONTAINER -->
+<div id="appShell"
+     class="w-full max-w-[1800px] h-[95vh] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl flex overflow-hidden relative">
+
+    <!-- =============== LEFT SIDEBAR =============== -->
+    <aside class="w-72 bg-slate-50 border-r border-slate-200 flex flex-col">
+
+      <!-- Logo -->
+      <div class="p-6 border-b border-slate-200">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center text-3xl text-white shadow-md">
+            📑
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-800 leading-tight">
+              Exam Monitoring
+            </h1>
+            <p class="text-[12px] text-slate-500">
+              Reports & History
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- User info -->
+      <div class="px-6 py-4 border-b border-slate-200 text-sm">
+        <p class="text-slate-600">Logged in as</p>
+        <p id="userFullName" class="text-base font-semibold text-slate-900">-</p>
+        <p id="userRole" class="text-[11px] text-sky-700 uppercase mt-1">-</p>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-4 py-6 space-y-2 text-[15px] font-medium">
+
+        <a
+          href="dashboard.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📊 <span>Dashboard</span>
+        </a>
+
+        <a
+          href="exams.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📚 <span>Exam Management</span>
+        </a>
+
+        <a
+          href="attendance.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          ✅ <span>Attendance</span>
+        </a>
+
+        <a
+          href="rooms.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          🗺️ <span>Classrooms Map</span>
+        </a>
+
+        <!-- Reports = Active page -->
+        <a
+          href="reports.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-sky-600 text-white shadow-sm"
+        >
+          📑 <span>Reports & History</span>
+        </a>
+
+      </nav>
+
+      <!-- Logout -->
+      <div class="p-6 border-t border-slate-200 text-sm">
+        <button
+          id="btnLogout"
+          class="w-full px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-md"
+        >
+          Log out
+        </button>
+      </div>
+    </aside>
+
+    <!-- =============== MAIN CONTENT =============== -->
+    <main class="flex-1 flex flex-col bg-white">
+
+      <!-- Top bar -->
+      <header class="h-20 border-b border-slate-200 flex items-center justify-between px-10 bg-white">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">
+            Reports & History
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">
+            View attendance summaries and incidents from recent exams.
+          </p>
+        </div>
+        <div class="text-right text-sm text-slate-500">
+          <p id="currentDate">Today: -</p>
+          <p class="text-[11px] text-slate-400">
+            Braude College • Exam Monitoring App
+          </p>
+        </div>
+      </header>
+
+      <!-- Reports content -->
+      <section class="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50">
+
+        <!-- Title -->
+        <div>
+          <h3 class="text-3xl font-bold text-slate-900 mb-2">
+            Reports & History – Last Exams
+          </h3>
+          <p class="text-sm text-slate-600 max-w-3xl">
+            Simple, clear reports for the last exams: attendance rate, incidents and trends over time.
+            The data is a simulation, but the logic is like a real system that saves every action.
+          </p>
+        </div>
+
+        <!-- Filters row -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+          <div class="flex flex-col md:flex-row md:items-end gap-4 justify-between">
+            <div class="space-y-2">
+              <p class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                Exams filter
+                <span id="viewRoleBadge"
+                  class="text-[10px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 font-semibold">
+                  -
+                </span>
+              </p>
+              <div class="flex flex-wrap gap-3 text-sm">
+                <div class="flex flex-col">
+                  <label for="filterCount" class="text-[11px] text-slate-500 mb-1">Number of exams</label>
+                  <select
+                    id="filterCount"
+                    class="border border-slate-300 rounded-lg px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  >
+                    <option value="5">Last 5 exams</option>
+                    <option value="10" selected>Last 10 exams</option>
+                    <option value="all">All exams in history</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col">
+                  <label for="filterType" class="text-[11px] text-slate-500 mb-1">Focus</label>
+                  <select
+                    id="filterType"
+                    class="border border-slate-300 rounded-lg px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  >
+                    <option value="all">All exams</option>
+                    <option value="lowAttendance">Low attendance (&lt; 80%)</option>
+                    <option value="highIncidents">Many incidents (&ge; 3)</option>
+                  </select>
+                </div>
+
+                <div class="flex flex-col min-w-[180px]">
+                  <label for="searchCourse" class="text-[11px] text-slate-500 mb-1">Search by course code</label>
+                  <input
+                    id="searchCourse"
+                    type="text"
+                    placeholder="e.g. CS101"
+                    class="border border-slate-300 rounded-lg px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="text-xs text-slate-500 bg-slate-50 rounded-xl p-3 max-w-md">
+              <p class="font-semibold text-slate-700 mb-1">
+                How to read this page?
+              </p>
+              <p>
+                • Top cards: summary of all selected exams.<br />
+                • Chart: attendance rate and incidents over time.<br />
+                • Table: details per exam.<br />
+                • Log: important events saved by the system.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- KPI cards -->
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+            <p class="text-[11px] text-slate-500">Exams in selection</p>
+            <p id="kpiExamsCount" class="text-2xl font-bold text-slate-900">0</p>
+          </div>
+          <div class="bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm p-4">
+            <p class="text-[11px] text-emerald-700">Average attendance</p>
+            <p id="kpiAvgAttendance" class="text-2xl font-bold text-emerald-800">0%</p>
+          </div>
+          <div class="bg-amber-50 rounded-2xl border border-amber-100 shadow-sm p-4">
+            <p class="text-[11px] text-amber-700">Average late arrivals</p>
+            <p id="kpiAvgLate" class="text-2xl font-bold text-amber-800">0</p>
+          </div>
+          <div class="bg-rose-50 rounded-2xl border border-rose-100 shadow-sm p-4">
+            <p class="text-[11px] text-rose-700">Average incidents per exam</p>
+            <p id="kpiAvgIncidents" class="text-2xl font-bold text-rose-800">0</p>
+          </div>
+        </section>
+
+        <!-- Chart + log -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Chart -->
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col">
+            <h4 class="text-lg font-semibold text-slate-900 mb-1">
+              Attendance trend – last exams
+            </h4>
+            <p class="text-xs text-slate-500 mb-4">
+              Attendance rate (%) and number of incidents per exam (sorted by date).
+            </p>
+            <div class="h-64">
+              <canvas id="reportsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Log -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col">
+            <h4 class="text-lg font-semibold text-slate-900 mb-1">
+              Saved events log (simulation)
+            </h4>
+            <p class="text-xs text-slate-500 mb-3">
+              Examples of actions recorded by the system: late arrivals, long bathroom exits, exam cancellations.
+            </p>
+            <ul id="logList" class="space-y-3 text-sm max-h-64 overflow-y-auto">
+              <!-- Filled by JS -->
+            </ul>
+          </div>
+        </section>
+
+        <!-- NEW: Download report per exam -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div class="space-y-2">
+              <p class="text-sm font-semibold text-slate-800">
+                Download exam report (PDF / Excel)
+              </p>
+              <div class="flex flex-wrap items-center gap-3 text-sm">
+                <div class="flex flex-col min-w-[220px]">
+                  <label for="downloadExamSelect" class="text-[11px] text-slate-500 mb-1">
+                    Choose exam
+                  </label>
+                  <select
+                    id="downloadExamSelect"
+                    class="border border-slate-300 rounded-lg px-2 py-1 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-sky-400"
+                  >
+                    <!-- Options filled by reports.js -->
+                  </select>
+                </div>
+
+                <div class="flex gap-2">
+                  <button
+                    id="btnDownloadPdf"
+                    class="px-4 py-2 rounded-full text-xs font-semibold 
+                            bg-red-100 text-red-800 hover:bg-red-200 shadow-sm"
+                    >
+                    ⬇ Download PDF
+                    </button>
+
+                  <button
+                    id="btnDownloadExcel"
+                    class="px-4 py-2 rounded-full text-xs font-semibold
+                            bg-emerald-100 text-emerald-800 hover:bg-emerald-200 shadow-sm"
+                    >
+                    ⬇ Download Excel
+                    </button>
+
+                </div>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-500 bg-slate-50 rounded-xl p-3 max-w-sm">
+              Files are simple / empty and used only as a
+              <span class="font-semibold">simulation</span> for the lecturer.
+              They are downloaded to the browser like real reports – good for screenshots and demo.
+            </p>
+          </div>
+        </section>
+
+        <!-- Table -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-md font-semibold text-slate-900">
+              Exams details – reports & history
+            </h4>
+            <p class="text-[11px] text-slate-500">
+              Shows up to the last 10 exams after filters.
+            </p>
+          </div>
+
+          <div class="overflow-x-auto max-h-[360px]">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
+                <tr>
+                  <th class="px-3 py-2 text-left">Date</th>
+                  <th class="px-3 py-2 text-left">Course</th>
+                  <th class="px-3 py-2 text-left">Room</th>
+                  <th class="px-3 py-2 text-left">Registered</th>
+                  <th class="px-3 py-2 text-left">Present</th>
+                  <th class="px-3 py-2 text-left">Attendance %</th>
+                  <th class="px-3 py-2 text-left">Late</th>
+                  <th class="px-3 py-2 text-left">Temp exits</th>
+                  <th class="px-3 py-2 text-left">Incidents</th>
+                  <th class="px-3 py-2 text-left">Cancelled exams</th>
+                </tr>
+              </thead>
+              <tbody id="reportsTableBody" class="divide-y divide-slate-100">
+                <!-- Filled by JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </section>
+    </main>
+
+  </div>
+
+  <!-- Scripts – קודם Fake Data ואז Reports -->
+  <script src="../js/fakeData.js"></script>
+  <script src="../js/reports.js"></script>
+
+  <script>
+    window.EXAM_APP_CONTEXT = chatbotSimulations.reports_lecturer;
+  </script>
+
+  <script src="../js/chatbot.js"></script>
+
+</body>
+</html>

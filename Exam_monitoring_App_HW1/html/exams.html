@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Monitoring APP | Exam Management</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-700 via-sky-600 to-cyan-400 flex items-center justify-center p-4">
+
+  <!-- MAIN CONTAINER -->
+<div id="appShell"
+     class="w-full max-w-[1800px] h-[95vh] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl flex overflow-hidden relative">
+
+    <!-- =============== LEFT SIDEBAR =============== -->
+    <aside class="w-72 bg-slate-50 border-r border-slate-200 flex flex-col">
+
+      <!-- Logo -->
+      <div class="p-6 border-b border-slate-200">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center text-3xl text-white shadow-md">
+            📚
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-800 leading-tight">
+              Exam Monitoring
+            </h1>
+            <p class="text-[12px] text-slate-500">
+              Exam Management
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- User info -->
+      <div class="px-6 py-4 border-b border-slate-200 text-sm">
+        <p class="text-slate-600">Logged in as</p>
+        <p id="userFullName" class="text-base font-semibold text-slate-900">-</p>
+        <p id="userRole" class="text-[11px] text-sky-700 uppercase mt-1">-</p>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-4 py-6 space-y-2 text-[15px] font-medium">
+
+        <a
+          href="dashboard.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📊 <span>Dashboard</span>
+        </a>
+
+        <a
+          href="exams.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-sky-600 text-white shadow-sm"
+        >
+          📚 <span>Exam Management</span>
+        </a>
+
+        <a
+          id="navAttendance"
+          href="attendance.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          ✅ <span>Attendance</span>
+        </a>
+
+        <a
+          href="rooms.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          🗺️ <span>Classrooms Map</span>
+        </a>
+
+        <a
+          id="reportsLink"
+          href="reports.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📑 <span>Reports</span>
+        </a>
+
+        
+
+      </nav>
+
+      <!-- Logout -->
+      <div class="p-6 border-t border-slate-200 text-sm">
+        <button
+          id="btnLogout"
+          class="w-full px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-md"
+        >
+          Log out
+        </button>
+      </div>
+    </aside>
+
+    <!-- =============== MAIN CONTENT =============== -->
+    <main class="flex-1 flex flex-col bg-white">
+
+      <!-- Top bar -->
+      <header class="h-20 border-b border-slate-200 flex items-center justify-between px-10 bg-white">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">
+            Exam Management
+          </h2>
+          <p class="text-sm text-slate-500 mt-1" id="headerSubtitle">
+            Manage active and upcoming exams based on your role.
+          </p>
+        </div>
+        <div class="text-right text-sm text-slate-500">
+          <p id="currentDate">Today: -</p>
+          <p class="text-[11px] text-slate-400">
+            Braude College • Exam Monitoring App
+          </p>
+        </div>
+      </header>
+
+      <!-- Page content -->
+      <section class="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50">
+
+        <!-- Info about role and scope -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-bold text-slate-900 mb-1">
+              Your Exams
+            </h3>
+            <p id="roleScopeText" class="text-sm text-slate-600 max-w-2xl">
+              Loading exams based on your role...
+            </p>
+          </div>
+
+          <!-- Filters -->
+          <div class="flex flex-wrap gap-2 text-xs">
+            <button
+              data-filter="all"
+              class="exam-filter-btn px-3 py-1.5 rounded-full border border-slate-300 bg-white text-slate-700 font-medium"
+            >
+              All exams
+            </button>
+            <button
+              data-filter="active"
+              class="exam-filter-btn px-3 py-1.5 rounded-full border border-emerald-300 bg-emerald-50 text-emerald-800 font-medium"
+            >
+              Active today
+            </button>
+            <button
+              data-filter="upcoming"
+              class="exam-filter-btn px-3 py-1.5 rounded-full border border-sky-300 bg-sky-50 text-sky-800 font-medium"
+            >
+              Upcoming
+            </button>
+            <button
+              data-filter="past"
+              class="exam-filter-btn px-3 py-1.5 rounded-full border border-slate-300 bg-slate-50 text-slate-600 font-medium"
+            >
+              Past
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-3">
+            <p class="text-xs text-slate-500">Total exams</p>
+            <p id="summaryTotal" class="text-2xl font-bold text-slate-900">0</p>
+          </div>
+          <div class="bg-emerald-50 rounded-2xl border border-emerald-200 shadow-sm px-4 py-3">
+            <p class="text-xs text-emerald-700">Active today</p>
+            <p id="summaryActive" class="text-2xl font-bold text-emerald-800">0</p>
+          </div>
+          <div class="bg-sky-50 rounded-2xl border border-sky-200 shadow-sm px-4 py-3">
+            <p class="text-xs text-sky-700">Upcoming</p>
+            <p id="summaryUpcoming" class="text-2xl font-bold text-sky-800">0</p>
+          </div>
+        </div>
+
+        <!-- Exams table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <h4 class="text-sm font-semibold text-slate-800">
+              Exams list
+            </h4>
+            <p id="examsCountLabel" class="text-xs text-slate-500">
+              0 exams found
+            </p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-slate-600 uppercase text-xs">
+                <tr>
+                  <th class="px-6 py-3 text-left font-semibold">Course</th>
+                  <th class="px-6 py-3 text-left font-semibold">Date & Time</th>
+                  <th class="px-6 py-3 text-left font-semibold">Room</th>
+                  <th class="px-6 py-3 text-left font-semibold">Lecturer</th>
+                  <th class="px-6 py-3 text-left font-semibold">Supervisors</th>
+                  <th class="px-6 py-3 text-left font-semibold">Status</th>
+                  <th class="px-6 py-3 text-middle font-semibold">Details</th>
+                </tr>
+              </thead>
+              <tbody id="examsTableBody" class="divide-y divide-slate-100 bg-white">
+                <!-- Filled by exams.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty state -->
+          <div id="emptyState" class="hidden px-6 py-10 text-center text-sm text-slate-500 bg-slate-50">
+            No exams found for your role and selected filter.
+          </div>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/fakeData.js"></script>
+  <script src="../js/exams.js"></script>
+  <script>
+  window.EXAM_APP_CONTEXT = chatbotSimulations.exams_lecturer;
+</script>
+  <script src="../js/chatbot.js"></script>
+
+</body>
+</html>

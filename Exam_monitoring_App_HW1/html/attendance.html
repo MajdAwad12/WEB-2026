@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Monitoring APP | Attendance</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-700 via-sky-600 to-cyan-400 flex items-center justify-center p-4">
+
+  <!-- MAIN CONTAINER -->
+<div id="appShell"
+     class="w-full max-w-[1800px] h-[95vh] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl flex overflow-hidden relative">
+
+    <!-- =============== LEFT SIDEBAR (Slider) =============== -->
+    <aside class="w-72 bg-slate-50 border-r border-slate-200 flex flex-col">
+
+      <!-- Logo -->
+      <div class="p-6 border-b border-slate-200">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center text-3xl text-white shadow-md">
+            ⏰
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-800 leading-tight">
+              Exam Monitoring
+            </h1>
+            <p class="text-[12px] text-slate-500">
+              Smart Exam & Attendance
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- User info -->
+      <div class="px-6 py-4 border-b border-slate-200 text-sm">
+        <p class="text-slate-600">Logged in as</p>
+        <p id="userFullName" class="text-base font-semibold text-slate-900">-</p>
+        <p id="userRole" class="text-[11px] text-sky-700 uppercase mt-1">-</p>
+      </div>
+
+      <!-- Navigation (Attendance = דף פעיל) -->
+      <nav class="flex-1 px-4 py-6 space-y-2 text-[15px] font-medium">
+
+        <a
+          href="dashboard.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📊 <span>Dashboard</span>
+        </a>
+
+        <a
+          href="exams.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📚 <span>Exam Management</span>
+        </a>
+
+        <a
+          id="navAttendance" href="attendance.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-sky-600 text-white shadow-sm"
+        >
+          ✅ <span>Attendance</span>
+        </a>
+
+        <a
+          href="rooms.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          🗺️ <span>Classrooms Map</span>
+        </a>
+
+        <!-- Reports – בעתיד אפשר לכוון לפי role ב-JS -->
+        <a
+          id="reportsLink"
+          href="reports.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📑 <span>Reports</span>
+        </a>
+
+        
+
+      </nav>
+
+      <!-- Logout -->
+      <div class="p-6 border-t border-slate-200 text-sm">
+        <button
+          id="btnLogout"
+          class="w-full px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-md"
+        >
+          Log out
+        </button>
+      </div>
+    </aside>
+
+    <!-- =============== MAIN CONTENT =============== -->
+    <main class="flex-1 flex flex-col bg-white">
+
+            <!-- Top bar -->
+      <header class="h-20 border-b border-slate-200 flex items-center justify-between px-10 bg-white">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">
+            Attendance
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">
+            Mark student presence, temporary exits and exceptions for the active exam 
+          </p>
+        </div>
+        <div class="text-right text-sm text-slate-500">
+          <p id="currentDate">Today: -</p>
+          <p class="text-[11px] text-slate-400">
+            Braude College • Exam Monitoring App
+          </p>
+        </div>
+      </header>
+
+
+
+
+
+      <!-- Attendance content -->
+      <section class="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50">
+
+        <!-- Title -->
+        <div>
+          <h3 class="text-3xl font-bold text-slate-900 mb-2">
+            Attendance – Active Exam
+          </h3>
+          <p class="text-sm text-slate-600 max-w-2xl">
+            Supervisor screen for marking presence, temporary exits and exceptions in the current exam (simulation).
+          </p>
+        </div>
+
+        <!-- Exam info + counters + QR box -->
+        <section class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 space-y-4">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+            <!-- Exam info -->
+            <div class="space-y-1">
+              <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                Current Exam – Attendance
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">
+                  Supervisor / Lecturer
+                </span>
+              </h2>
+              <p id="examShortInfo" class="text-sm text-slate-600">
+                Loading exam for you (simulation)...
+              </p>
+            </div>
+
+            <!-- Counters summary -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm w-full lg:w-auto">
+              <div class="bg-emerald-50 rounded-xl px-3 py-2 flex flex-col items-center">
+                <p class="text-[11px] text-slate-500">Present</p>
+                <p id="countPresent" class="text-xl font-bold text-emerald-700">0</p>
+              </div>
+              <div class="bg-amber-50 rounded-xl px-3 py-2 flex flex-col items-center">
+                <p class="text-[11px] text-slate-500">Out of room</p>
+                <p id="countOut" class="text-xl font-bold text-amber-700">0</p>
+              </div>
+              <div class="bg-rose-50 rounded-xl px-3 py-2 flex flex-col items-center">
+                <p class="text-[11px] text-slate-500">Absent</p>
+                <p id="countAbsent" class="text-xl font-bold text-rose-700">0</p>
+              </div>
+              <div class="bg-slate-50 rounded-xl px-3 py-2 flex flex-col items-center">
+                <p class="text-[11px] text-slate-500">Not arrived</p>
+                <p id="countNotArrived" class="text-xl font-bold text-slate-700">0</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Helper text -->
+          <p class="text-xs text-slate-500 leading-relaxed">
+            Use the buttons in each row to mark students as
+            <span class="font-semibold">Present</span>,
+            <span class="font-semibold">Absent</span> or
+            <span class="font-semibold">Not Arrived</span>.
+            The "Out / Bathroom" column manages
+            <span class="font-semibold">temporary exits</span>.
+            In the "Exceptions / Rule violations" column you can mark
+            <span class="font-semibold">exam cancellation</span> for serious cheating.
+            The QR box below is a
+            <span class="font-semibold">simulation only</span> – no real camera.
+          </p>
+
+          <!-- Actions row -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              id="btnMarkAllPresent"
+              class="px-4 py-2 text-xs rounded-full bg-sky-600 text-white hover:bg-sky-700 shadow-sm font-semibold"
+            >
+              Mark all as Present
+            </button>
+            <button
+              id="btnResetAll"
+              class="px-4 py-2 text-xs rounded-full bg-slate-200 text-slate-800 hover:bg-slate-300 shadow-sm font-semibold"
+            >
+              Reset to "Not Arrived"
+            </button>
+            <span class="text-[11px] text-slate-400 flex items-center">
+              Simulation only – changes are not saved to a real database.
+            </span>
+          </div>
+
+          <!-- QR / ID Scan Simulation Box -->
+          <div
+            class="mt-3 border border-amber-200 rounded-2xl bg-amber-50/70 p-4 
+                   flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          >
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                <span class="text-2xl">📷</span>
+              </div>
+              <div class="text-xs text-amber-900 space-y-1">
+                <p class="font-semibold text-[13px]">
+                  QR / ID Scan – Simulation
+                </p>
+                <p>
+                  In a real exam, the supervisor would scan the student's QR code or ID card
+                  and the system would automatically mark them as
+                  <span class="font-semibold">Present</span>.
+                  Here we only simulate this behavior using the dropdown and button.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-col md:items-end gap-1 text-xs min-w-[240px]">
+              <label for="scanStudentSelect" class="font-semibold text-amber-900">
+                Choose student to simulate scan:
+              </label>
+              <select
+                id="scanStudentSelect"
+                class="border border-amber-300 rounded-lg px-2 py-1 bg-white text-amber-900 text-xs
+                       focus:outline-none focus:ring-1 focus:ring-amber-400"
+              >
+              </select>
+              <button
+                id="btnScanSim"
+                class="mt-1 px-3 py-1 text-xs rounded-full bg-amber-500 text-white font-semibold
+                       hover:bg-amber-600 shadow-sm"
+              >
+                Scan &amp; Mark Present (Simulation)
+              </button>
+              <p id="scanInfo" class="text-[11px] text-amber-900/80 mt-1">
+                No scan yet (simulation).
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Students table section -->
+        <section class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+          <h3 class="text-md font-semibold text-slate-800 mb-3">
+            Students list – mark attendance
+          </h3>
+
+          <div class="overflow-x-auto max-h-[420px]">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 border-b text-xs text-slate-500 uppercase">
+                <tr>
+                  <th class="px-3 py-2 text-left">Seat</th>
+                  <th class="px-3 py-2 text-left">Student ID</th>
+                  <th class="px-3 py-2 text-left">Name</th>
+                  <th class="px-3 py-2 text-left">Status</th>
+                  <th class="px-3 py-2 text-left">Actions</th>
+                  <th class="px-3 py-2 text-left">Out / Bathroom</th>
+                  <th class="px-3 py-2 text-left">Exceptions / Rule violations</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTableBody" class="divide-y divide-slate-100">
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </section>
+    </main>
+
+  </div>
+
+  <!-- Scripts – סדר חשוב: קודם fakeData ואז attendance -->
+  <script src="../js/fakeData.js"></script>
+  <script src="../js/attendance.js"></script>
+  <script src="fakeData.js"></script>
+
+<script>
+  window.EXAM_APP_CONTEXT = chatbotSimulations.attendance_supervisor;
+</script>
+
+
+  <script src="../js/chatbot.js"></script>
+
+</body>
+</html>

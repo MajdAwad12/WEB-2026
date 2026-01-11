@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exam Monitoring APP | Classrooms Map</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-indigo-700 via-sky-600 to-cyan-400 flex items-center justify-center p-4">
+
+  <!-- MAIN CONTAINER -->
+<div id="appShell"
+     class="w-full max-w-[1800px] h-[95vh] bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl flex overflow-hidden relative">
+
+    <!-- =============== LEFT SIDEBAR =============== -->
+    <aside class="w-72 bg-slate-50 border-r border-slate-200 flex flex-col">
+
+      <!-- Logo -->
+      <div class="p-6 border-b border-slate-200">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-2xl bg-sky-600 flex items-center justify-center text-3xl text-white shadow-md">
+            🗺️
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-800 leading-tight">
+              Exam Monitoring
+            </h1>
+            <p class="text-[12px] text-slate-500">
+              Classrooms Map
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- User info -->
+      <div class="px-6 py-4 border-b border-slate-200 text-sm">
+        <p class="text-slate-600">Logged in as</p>
+        <p id="userFullName" class="text-base font-semibold text-slate-900">-</p>
+        <p id="userRole" class="text-[11px] text-sky-700 uppercase mt-1">-</p>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-4 py-6 space-y-2 text-[15px] font-medium">
+
+        <a
+          href="dashboard.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📊 <span>Dashboard</span>
+        </a>
+
+        <a
+          href="exams.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📚 <span>Exam Management</span>
+        </a>
+
+        <a
+          href="attendance.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          ✅ <span>Attendance</span>
+        </a>
+
+        <a
+          href="rooms.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-sky-600 text-white shadow-sm"
+        >
+          🗺️ <span>Classrooms Map</span>
+        </a>
+
+        <a
+          id="reportsLink"
+          href="reports.html"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-sky-50 text-slate-700 transition"
+        >
+          📑 <span>Reports</span>
+        </a>
+
+      </nav>
+
+      <!-- Logout -->
+      <div class="p-6 border-t border-slate-200 text-sm">
+        <button
+          id="btnLogout"
+          class="w-full px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-md"
+        >
+          Log out
+        </button>
+      </div>
+    </aside>
+
+    <!-- =============== MAIN CONTENT =============== -->
+    <main class="flex-1 flex flex-col bg-white">
+
+      <!-- Top bar -->
+      <header class="h-20 border-b border-slate-200 flex items-center justify-between px-10 bg-white">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">
+            Classrooms Map
+          </h2>
+          <p class="text-sm text-slate-500 mt-1" id="headerSubtitle">
+            Loading classrooms map based on your role...
+          </p>
+        </div>
+        <div class="text-right text-sm text-slate-500">
+          <p id="currentDate">Today: -</p>
+          <p class="text-[11px] text-slate-400">
+            Braude College • Exam Monitoring App
+          </p>
+        </div>
+      </header>
+
+      <!-- Page content -->
+      <section class="flex-1 overflow-y-auto p-10 space-y-8 bg-slate-50">
+
+        <!-- Info + Report -->
+        <section class="bg-white/90 rounded-2xl shadow-lg px-5 py-4 border border-slate-200">
+          <h3 class="text-xl font-bold text-slate-900">Classrooms Overview</h3>
+          <p class="text-sm text-slate-600 mt-2" id="roleInfoText">
+            View and manage rooms, supervisors and students for active exams (simulation).
+          </p>
+
+          <button
+            id="generateReport"
+            class="mt-4 px-4 py-2 bg-sky-600 text-white text-sm rounded-xl hover:bg-sky-700 shadow-md"
+          >
+            Generate Rooms Report (simulation)
+          </button>
+        </section>
+
+        <!-- Stats + Search + Filter -->
+        <section class="bg-white/90 rounded-2xl shadow-lg px-5 py-4 border border-slate-200">
+          <p id="examRoomsCount" class="text-lg font-bold text-slate-800 mb-3">
+            Exam Rooms: 0 / 0
+          </p>
+
+          <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+
+            <!-- Search Bar -->
+            <div class="relative w-full md:w-96">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+              <input
+                id="searchInput"
+                type="text"
+                placeholder="Search supervisor, room, student, or exam…"
+                class="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-300 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-sm bg-white"
+              />
+            </div>
+
+            <!-- Show Only Exam Rooms Button -->
+            <button
+              id="showOnlyExamsBtn"
+              class="px-4 py-2 rounded-xl text-sm font-semibold border border-sky-600
+                     bg-white text-sky-700 hover:bg-sky-50 transition"
+            >
+              Show Only Exam Rooms
+            </button>
+          </div>
+        </section>
+
+        <!-- Rooms Grid -->
+        <section id="roomsGrid"
+                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Auto-filled by rooms.js -->
+        </section>
+
+      </section>
+    </main>
+
+  </div>
+
+  <!-- =============== MODAL – CLASSROOM LAYOUT =============== -->
+  <div
+  id="roomModal"
+  class="fixed inset-0 bg-black/40 hidden items-center justify-center p-2 sm:p-4 z-50"
+>
+  <div
+    class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl
+           max-h-[90vh] overflow-y-auto p-4 sm:p-6 relative"
+  >
+
+
+      <!-- Close -->
+      <button
+        id="closeModal"
+        class="absolute top-3 right-3 text-slate-500 hover:text-slate-800 text-xl"
+      >
+        ✖
+      </button>
+
+      <!-- Titles -->
+      <h3 id="modalRoomTitle" class="text-xl font-bold text-slate-900"></h3>
+      <p id="modalRoomSubtitle" class="text-xs text-slate-500 mt-1"></p>
+
+      <!-- Classroom "picture" -->
+      <div class="mt-4 bg-slate-100 rounded-2xl p-4 border border-slate-200">
+        <!-- Board -->
+        <div class="w-full h-8 rounded-md bg-slate-800 flex items-center justify-center mb-3">
+          <span class="text-[11px] text-white tracking-widest">BOARD / SCREEN</span>
+        </div>
+
+        <div class="flex gap-4">
+          <!-- Seats grid -->
+          <div class="flex-1">
+            <div
+            id="seatGrid"
+            class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2 justify-items-center"
+          >
+
+              <!-- Filled by JS: seats as small rectangles with number + student -->
+            </div>
+          </div>
+
+          <!-- Supervisor desk -->
+          <div class="w-28 flex flex-col items-center gap-2">
+            <div class="w-20 h-12 rounded-lg bg-amber-200 border border-amber-400 flex items-center justify-center text-[11px] font-semibold text-amber-900 shadow-sm">
+              Supervisor
+            </div>
+            <p class="text-[10px] text-slate-500 text-center">
+              Supervisor desk – near the board to monitor all rows.
+            </p>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-4 flex flex-wrap gap-3 text-[10px] text-slate-600">
+          <div class="flex items-center gap-1">
+            <span class="w-4 h-4 rounded bg-emerald-500 inline-block"></span> Present
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-4 h-4 rounded bg-amber-400 inline-block"></span> Late / Out
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-4 h-4 rounded bg-rose-500 inline-block"></span> Absent
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-4 h-4 rounded bg-purple-500 inline-block"></span> Suspected / Rule violation
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="w-4 h-4 rounded bg-slate-300 inline-block"></span> Empty seat
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed seat list -->
+      <div class="mt-4">
+        <h4 class="text-sm font-semibold text-slate-800 mb-2">
+          Seats & students (simulation)
+        </h4>
+        <ul id="seatList" class="max-h-40 overflow-y-auto text-xs text-slate-700 space-y-1">
+          <!-- Filled by JS -->
+        </ul>
+      </div>
+
+      <!-- 🔹 NEW: Manage students in this room (simulation) -->
+      <div class="mt-6 border-t border-slate-200 pt-4">
+        <h4 class="text-sm font-semibold text-slate-800 mb-3">
+          Manage students in this room (simulation)
+        </h4>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <!-- Move student -->
+          <div class="space-y-2">
+            <p class="font-semibold text-slate-700">Move student to another room</p>
+
+            <div class="space-y-1">
+              <label class="block text-[11px] text-slate-500" for="moveStudentIdSelect">
+                Select student
+              </label>
+              <select
+                id="moveStudentIdSelect"
+                class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              >
+                <option value="">-- Select student --</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-[11px] text-slate-500" for="moveTargetRoomSelect">
+                Target room
+              </label>
+              <select
+                id="moveTargetRoomSelect"
+                class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
+              >
+                <option value="">-- Select room --</option>
+              </select>
+            </div>
+
+            <button
+              id="btnMoveStudent"
+              class="mt-1 inline-flex items-center justify-center px-3 py-1.5 rounded-lg
+                     bg-sky-600 text-white text-[11px] font-semibold hover:bg-sky-700 shadow-sm"
+            >
+              Move student (simulation)
+            </button>
+          </div>
+
+          <!-- Add missing student -->
+          <div class="space-y-2">
+            <p class="font-semibold text-slate-700">Add missing student to this room</p>
+
+            <div class="space-y-1">
+              <label class="block text-[11px] text-slate-500" for="addStudentIdInput">
+                Student ID
+              </label>
+              <input
+                id="addStudentIdInput"
+                type="text"
+                class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                placeholder="e.g., 123456789"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="block text-[11px] text-slate-500" for="addStudentNameInput">
+                Full name
+              </label>
+              <input
+                id="addStudentNameInput"
+                type="text"
+                class="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs
+                       focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white"
+                placeholder="e.g., Dana Cohen"
+              />
+            </div>
+
+            <button
+              id="btnAddStudent"
+              class="mt-1 inline-flex items-center justify-center px-3 py-1.5 rounded-lg
+                     bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 shadow-sm"
+            >
+              Add student (simulation)
+            </button>
+
+            <p class="text-[10px] text-slate-500">
+              This updates only the current simulation – not the real database.
+            </p>
+          </div>
+        </div>
+      </div>
+      <!-- 🔹 END NEW BLOCK -->
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/fakeData.js"></script>
+  <script src="../js/rooms.js"></script>
+  <script src="../js/chatbot.js"></script>
+</body>
+</html>
