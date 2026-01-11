@@ -1,9 +1,11 @@
 // ===============================
-// file: client/src/pages/exams/ExamPage.jsx
+// file: client/src/pages/exams/ExamsPage.jsx
 // ===============================
 import { useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import RocketLoader from "../../components/loading/RocketLoader.jsx";
+import { getExams } from "../../services/exams.service.js";
+
 const TABS = [
   { key: "all", label: "All" },
   { key: "past", label: "Past" },
@@ -57,7 +59,7 @@ function StatusPill({ v }) {
   return <span className={`${base} ${cls}`}>{String(v || "").toUpperCase()}</span>;
 }
 
-export default function ExamPage() {
+export default function ExamsPage() {
   const { setChatContext } = useOutletContext();
 
   const [tab, setTab] = useState("all");
@@ -87,17 +89,8 @@ export default function ExamPage() {
         setLoading(true);
         setError("");
 
-        const res = await fetch("http://localhost:5000/api/exams", { credentials: "include" });
-        if (!res.ok) {
-          let msg = "Failed to load exams";
-          try {
-            const j = await res.json();
-            msg = j?.message || msg;
-          } catch {}
-          throw new Error(msg);
-        }
-
-        const data = await res.json();
+        // ✅ FIX: use service (respects VITE_API_BASE and production)
+        const data = await getExams();
         const list = Array.isArray(data?.exams) ? data.exams : [];
         if (alive) setItems(list);
       } catch (e) {
@@ -117,9 +110,9 @@ export default function ExamPage() {
     return items.filter((ex) => classify(ex) === tab);
   }, [items, tab]);
 
-if (loading) {
-  return <RocketLoader />;
-}
+  if (loading) {
+    return <RocketLoader />;
+  }
 
   if (error) {
     return (
@@ -127,7 +120,9 @@ if (loading) {
         <div className="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-rose-900 shadow-sm">
           <div className="font-extrabold text-lg">Failed to load exams</div>
           <div className="text-sm mt-1">{error}</div>
-          <div className="text-xs mt-2 text-rose-800/80">Tip: make sure you are logged-in (cookie "sid" exists), then refresh.</div>
+          <div className="text-xs mt-2 text-rose-800/80">
+            Tip: make sure you are logged-in (cookie "sid" exists), then refresh.
+          </div>
         </div>
       </div>
     );
