@@ -1,10 +1,13 @@
+// server/index.js
 import path from "path";
 import { fileURLToPath } from "url";
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import session from "express-session";
 import MongoStore from "connect-mongo";
+
 import authRoutes from "./src/routes/auth.routes.js";
 import { connectDB } from "./src/db/connectDB.js";
 import dashboardRoutes from "./src/routes/dashboard.routes.js";
@@ -14,39 +17,57 @@ import messagesRoutes from "./src/routes/messages.routes.js";
 import incidentsRoutes from "./src/routes/incidents.routes.js";
 import adminRoutes from "./src/routes/admin.routes.js";
 import chatRoutes from "./src/routes/chat.routes.js";
-import reportsRoutes from "./src/routes/reports.routes.js"; 
+import reportsRoutes from "./src/routes/reports.routes.js";
 import studentRoutes from "./src/routes/student.routes.js";
-
-
 
 dotenv.config();
 
 const app = express();
 
-// Body + CORS
-app.use(express.json());  
-const allowedOrigins = process.env.CLIENT_ORIGIN.split(",");
+// If behind Render proxy, this is needed for secure cookies in production
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+// Body
+app.use(express.json());
+
+// =========================
+// CORS (robust)
+// =========================
+const fromEnv =
+  (process.env.CLIENT_ORIGIN || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean) || [];
+
+const ALLOWED_ORIGINS = new Set([
+  ...fromEnv,
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://exam-monitoring-app.onrender.com", // your Render URL (same domain)
+]);
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // allow REST tools like Postman / same-origin
-      if (!origin) return callback(null, true);
+    origin: (origin, cb) => {
+      // Allow requests with no origin (same-origin, Postman, etc.)
+      if (!origin) return cb(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+      if (ALLOWED_ORIGINS.has(origin)) return cb(null, true);
 
-      return callback(new Error("Not allowed by CORS"));
+      return cb(new Error("Not allowed by CORS"));
     },
     credentials: true,
   })
 );
 
-// ✅ SESSION MIDDLEWARE (חייב לפני routes)
+// =========================
+// Session (must be before routes)
+// =========================
 app.use(
   session({
-    name: "sid", // cookie name
+    name: "sid",
     secret: process.env.SESSION_SECRET || "dev_secret",
     resave: false,
     saveUninitialized: false,
@@ -56,14 +77,16 @@ app.use(
     }),
     cookie: {
       httpOnly: true,
-      sameSite: "lax", // dev: lax הכי פשוט
-      secure: false,   // dev: false (ב-https זה true)
+      sameSite: "lax", // same-site is perfect because client+server are same domain now
+      secure: process.env.NODE_ENV === "production", // Render is HTTPS
       maxAge: 1000 * 60 * 60 * 2, // 2 hours
     },
   })
 );
 
-// Routes
+// =========================
+// API Routes
+// =========================
 app.use("/api/auth", authRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/transfers", transferRoutes);
@@ -75,10 +98,6 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/student", studentRoutes);
 
-
-// NOTE: exams are stored in the MongoDB collection "moddle" (see Exam model).
-// The API is kept under /api/exams for simplicity.
-
 // =========================
 // Serve React build (production)
 // =========================
@@ -86,21 +105,21 @@ if (process.env.NODE_ENV === "production") {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  // from: server/index.js -> ../client/dist
+  // server/index.js -> ../client/dist
   const distPath = path.join(__dirname, "..", "client", "dist");
 
   app.use(express.static(distPath));
 
-  // For React Router (SPA): return index.html for any unknown route
-  // For React Router (SPA): return index.html for any unknown route
-app.get(/^(?!\/assets\/).*/, (req, res) => {
-  res.sendFile(path.join(distPath, "index.html"));
-});
-
+  // SPA fallback: ONLY for non-API and non-assets routes
+  // Express 5 safe (regex), does not break /assets or /api
+  app.get(/^\/(?!api\/|assets\/).*/, (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
 }
 
-
-// ✅ START
+// =========================
+// START
+// =========================
 async function start() {
   try {
     await connectDB();
