@@ -24,34 +24,37 @@ dotenv.config();
 
 const app = express();
 
-// If behind Render proxy, this is needed for secure cookies in production
+// =========================
+// Trust proxy (Render / HTTPS cookies)
+// =========================
 if (process.env.NODE_ENV === "production") {
   app.set("trust proxy", 1);
 }
 
-// Body
+// =========================
+// Body parser
+// =========================
 app.use(express.json());
 
 // =========================
-// CORS (robust)
+// CORS (safe for same-domain + local dev)
 // =========================
-const fromEnv =
-  (process.env.CLIENT_ORIGIN || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean) || [];
+const fromEnv = (process.env.CLIENT_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 const ALLOWED_ORIGINS = new Set([
   ...fromEnv,
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://exam-monitoring-app.onrender.com", // your Render URL (same domain)
+  "https://exam-monitoring-app.onrender.com",
 ]);
 
 app.use(
   cors({
     origin: (origin, cb) => {
-      // Allow requests with no origin (same-origin, Postman, etc.)
+      // Allow same-origin, server-side, Postman, etc.
       if (!origin) return cb(null, true);
 
       if (ALLOWED_ORIGINS.has(origin)) return cb(null, true);
@@ -63,7 +66,7 @@ app.use(
 );
 
 // =========================
-// Session (must be before routes)
+// Session (MUST be before routes)
 // =========================
 app.use(
   session({
@@ -77,8 +80,8 @@ app.use(
     }),
     cookie: {
       httpOnly: true,
-      sameSite: "lax", // same-site is perfect because client+server are same domain now
-      secure: process.env.NODE_ENV === "production", // Render is HTTPS
+      sameSite: "lax", // client + server are same domain
+      secure: process.env.NODE_ENV === "production", // HTTPS on Render
       maxAge: 1000 * 60 * 60 * 2, // 2 hours
     },
   })
@@ -110,15 +113,15 @@ if (process.env.NODE_ENV === "production") {
 
   app.use(express.static(distPath));
 
-  // SPA fallback: ONLY for non-API and non-assets routes
-  // Express 5 safe (regex), does not break /assets or /api
+  // ✅ SPA fallback
+  // IMPORTANT: do NOT catch /api or /assets
   app.get(/^\/(?!api\/|assets\/).*/, (req, res) => {
     res.sendFile(path.join(distPath, "index.html"));
   });
 }
 
 // =========================
-// START
+// START SERVER
 // =========================
 async function start() {
   try {
