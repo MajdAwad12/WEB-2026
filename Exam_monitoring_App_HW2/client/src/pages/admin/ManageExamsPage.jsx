@@ -1,7 +1,7 @@
 // ===============================
 // file: client/src/pages/admin/ManageExamsPage.jsx
 // ===============================
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 
 import { createExam, getAdminExams, startExam, endExam } from "../../services/exams.service.js";
@@ -219,7 +219,12 @@ export default function ManageExamsPage() {
   const [supervisors, setSupervisors] = useState([]);
   const [exams, setExams] = useState([]);
 
-  const [loading, setLoading] = useState(true);
+  // ✅ Split loading:
+  // - initialLoading: first fetch only (full page loader ok)
+  // - refreshing: subsequent refreshes (do NOT block page)
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [workingId, setWorkingId] = useState(null);
 
@@ -284,12 +289,6 @@ export default function ManageExamsPage() {
 
   // ✅ Create-only: draft state
   const [totalStudentsDraft, setTotalStudentsDraft] = useState(0);
-
-  /**
-   * ✅ IMPORTANT FIX:
-   * requestedRoomsDraft = 0 means "AUTO" (server decides by students)
-   * If you set it to 2+ then it becomes a MINIMUM, not a fixed count.
-   */
   const [requestedRoomsDraft, setRequestedRoomsDraft] = useState(0);
 
   const [draftBusy, setDraftBusy] = useState(false);
@@ -308,37 +307,47 @@ export default function ManageExamsPage() {
   const [pageSize, setPageSize] = useState(8);
   const [page, setPage] = useState(1);
 
-  async function refresh() {
-    setLoading(true);
-    setError(null);
-    try {
-      const [lsRes, ssRes, exRes] = await Promise.all([listUsers("lecturer"), listUsers("supervisor"), getAdminExams()]);
-      const ls = unwrapUsers(lsRes);
-      const ss = unwrapUsers(ssRes);
-      const list = unwrapExams(exRes);
+  // ✅ SAFE refresh that does not force full-page loader after initial load
+  const refresh = useCallback(
+    async ({ silent = false } = {}) => {
+      if (silent) {
+        setRefreshing(true);
+      } else {
+        setInitialLoading(true);
+      }
 
-      setLecturers(ls);
-      setSupervisors(ss);
-      setExams(list);
+      setError(null);
 
-      if (!lecturerId && ls.length) setLecturerId(String(getId(ls[0])));
-    } catch (e) {
-      setError(e?.message || "Failed to load admin data");
-    } finally {
-      setLoading(false);
-    }
-  }
+      try {
+        const [lsRes, ssRes, exRes] = await Promise.all([listUsers("lecturer"), listUsers("supervisor"), getAdminExams()]);
+        const ls = unwrapUsers(lsRes);
+        const ss = unwrapUsers(ssRes);
+        const list = unwrapExams(exRes);
+
+        setLecturers(ls);
+        setSupervisors(ss);
+        setExams(list);
+
+        // keep lecturer selection stable
+        if (!lecturerId && ls.length) setLecturerId(String(getId(ls[0])));
+      } catch (e) {
+        setError(e?.message || "Failed to load admin data");
+      } finally {
+        if (silent) setRefreshing(false);
+        else setInitialLoading(false);
+      }
+    },
+    [lecturerId]
+  );
 
   useEffect(() => {
-    refresh();
+    refresh({ silent: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ✅ clean admin gate
   if (me?.role !== "admin") {
- if (loading) {
-  return <RocketLoader />;
-}
+    if (initialLoading) return <RocketLoader />;
     return (
       <Card className="p-6">
         <div className="text-xl font-extrabold text-slate-900">Exam Management</div>
@@ -355,7 +364,6 @@ export default function ManageExamsPage() {
     setStartAt(toLocalInputValue(new Date(Date.now() + 60 * 60 * 1000)));
     setEndAt(toLocalInputValue(new Date(Date.now() + 2 * 60 * 60 * 1000)));
 
-    // ✅ Start from clean slate (0 students, 0 rooms)
     setTotalStudentsDraft(0);
     setRequestedRoomsDraft(0);
 
@@ -363,7 +371,6 @@ export default function ManageExamsPage() {
     setDraftLecturer(null);
     setDraftCoLecturers([]);
 
-    // ✅ rooms start empty
     setRooms([]);
   }
 
@@ -464,6 +471,25 @@ export default function ManageExamsPage() {
     return uniq(ids);
   }
 
+  // ✅ Optimistic local update helpers (no UI/design change)
+  function upsertExamLocal(examLike) {
+    const id = getId(examLike);
+    if (!id) return;
+    setExams((prev) => {
+      const copy = [...safeArr(prev, [])];
+      const idx = copy.findIndex((x) => String(getId(x)) === String(id));
+      if (idx >= 0) {
+        copy[idx] = { ...copy[idx], ...examLike };
+        return copy;
+      }
+      return [examLike, ...copy];
+    });
+  }
+
+  function removeExamLocal(examId) {
+    setExams((prev) => safeArr(prev, []).filter((x) => String(getId(x)) !== String(examId)));
+  }
+
   async function submitCreateOrEdit({ isEdit }) {
     setSaving(true);
     setMsg(null);
@@ -478,7 +504,7 @@ export default function ManageExamsPage() {
         examDate: start.toISOString(),
         startAt: start.toISOString(),
         endAt: end.toISOString(),
-        lecturerId, // server compatibility
+        lecturerId,
         supervisorIds: roomsToSupervisorIds(cleanRooms),
         classrooms: cleanRooms.map((r) => {
           const { _uid, ...rest } = r;
@@ -492,7 +518,11 @@ export default function ManageExamsPage() {
       }
 
       if (!isEdit) {
-        await createExam(payload);
+        const res = await createExam(payload);
+        // if API returns created exam -> use it, else silent refresh will reconcile
+        const created = res?.exam || res?.data?.exam;
+        if (created) upsertExamLocal(created);
+
         showMsg("Exam created successfully.", 2500);
         setCreateOpen(false);
         setEditExam(null);
@@ -500,13 +530,17 @@ export default function ManageExamsPage() {
         const examId = getId(editExam);
         if (!examId) throw new Error("Missing exam id");
 
-        await updateExamAdmin(examId, payload);
+        const res = await updateExamAdmin(examId, payload);
+        const updated = res?.exam || res?.data?.exam;
+        if (updated) upsertExamLocal(updated);
+
         showMsg("Exam updated successfully.", 2500);
         setEditOpen(false);
         setEditExam(null);
       }
 
-      await refresh();
+      // ✅ silent refresh (keeps screen, no RocketLoader)
+      await refresh({ silent: true });
     } catch (e2) {
       setError(e2?.message || "Failed to save exam");
     } finally {
@@ -521,10 +555,15 @@ export default function ManageExamsPage() {
     setError(null);
     try {
       await deleteExamAdmin(examId);
+
+      // ✅ instant local remove
+      removeExamLocal(examId);
+
       showMsg("Exam deleted successfully.", 2500);
       setEditOpen(false);
       setEditExam(null);
-      await refresh();
+
+      await refresh({ silent: true });
     } catch (e) {
       setError(e?.message || "Failed to delete exam");
     } finally {
@@ -548,8 +587,12 @@ export default function ManageExamsPage() {
 
     try {
       await startExam(id);
+
+      // ✅ local fast status update (keeps UI snappy)
+      upsertExamLocal({ ...exam, status: "running" });
+
       showMsg("Exam started (status set to running).", 2500);
-      await refresh();
+      await refresh({ silent: true });
     } catch (e) {
       setError(e?.message || "Failed to start exam");
     } finally {
@@ -573,8 +616,12 @@ export default function ManageExamsPage() {
 
     try {
       await endExam(id);
+
+      // ✅ local fast status update
+      upsertExamLocal({ ...exam, status: "ended" });
+
       showMsg("Exam ended (status set to ended).", 2500);
-      await refresh();
+      await refresh({ silent: true });
     } catch (e) {
       setError(e?.message || "Failed to end exam");
     } finally {
@@ -599,9 +646,6 @@ export default function ManageExamsPage() {
         throw new Error("End time must be after Start time.");
       }
 
-      // ✅ IMPORTANT FIX:
-      // requestedRoomsDraft = 0 => AUTO (allow shrinking)
-      // requestedRoomsDraft > 0 => minimum rooms
       const requestedRoomsFinal = Math.max(0, Number(requestedRoomsDraft || 0));
 
       const res = await autoAssignDraft({
@@ -627,9 +671,7 @@ export default function ManageExamsPage() {
 
       if (!cls.length) throw new Error("Draft returned no classrooms.");
 
-      // ✅ Replace rooms entirely (can grow OR shrink)
       setRooms(cls);
-
       setDraftMeta(draft?.meta || null);
 
       const lec = draft?.lecturer || null;
@@ -639,8 +681,6 @@ export default function ManageExamsPage() {
 
       if (lec?.id) setLecturerId(String(lec.id));
 
-      // ✅ Do NOT overwrite requestedRoomsDraft with cls.length
-      // This is the bug that prevented shrinking when students decreased.
       showMsg("Auto-Assign draft created. Review rooms/supervisors, then Create.", 3200);
     } catch (e) {
       setError(e?.message || "Failed to auto-assign draft");
@@ -655,7 +695,6 @@ export default function ManageExamsPage() {
       const r = { ...(copy[idx] || {}) };
       r[key] = value;
 
-      // keep id<->name in sync
       if (key === "id") r.name = String(value || "");
       if (key === "name") r.id = String(value || "");
 
@@ -764,9 +803,10 @@ export default function ManageExamsPage() {
   // eslint-disable-next-line no-unused-vars
   const _ = clockTick;
 
-if (loading) {
-  return <RocketLoader />;
-}
+  // ✅ ONLY first load uses full page loader
+  if (initialLoading) {
+    return <RocketLoader />;
+  }
 
   return (
     <div className="space-y-5">
@@ -811,7 +851,11 @@ if (loading) {
       </Card>
 
       {(error || msg) ? (
-        <div className={`rounded-2xl border p-4 ${error ? "bg-rose-50 border-rose-200 text-rose-800" : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
+        <div
+          className={`rounded-2xl border p-4 ${
+            error ? "bg-rose-50 border-rose-200 text-rose-800" : "bg-emerald-50 border-emerald-200 text-emerald-800"
+          }`}
+        >
           {error || msg}
         </div>
       ) : null}
@@ -921,7 +965,9 @@ if (loading) {
             <div className="text-lg font-bold text-slate-900">Exams</div>
             <div className="text-sm text-slate-600">Start/End work only during the real time window (startAt → endAt).</div>
           </div>
-          {loading ? <div className="text-sm text-slate-600">Loading…</div> : null}
+
+          {/* ✅ show non-blocking refresh status */}
+          {refreshing ? <div className="text-sm text-slate-600">Loading…</div> : null}
         </div>
 
         <div className="mt-4 overflow-x-auto">
@@ -1029,7 +1075,7 @@ if (loading) {
                 );
               })}
 
-              {!loading && filtered.length === 0 ? (
+              {!refreshing && filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-slate-600">
                     No exams found with current filters.
@@ -1072,6 +1118,8 @@ if (loading) {
           </div>
         }
       >
+        {/* === (your modal content unchanged) === */}
+        {/* I kept everything the same below - exactly your UI/logic */}
         <div className="grid grid-cols-1 gap-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <SectionTitle title="① Exam Details" desc="Fill the basics. Nothing is guessed." />
@@ -1123,7 +1171,7 @@ if (loading) {
                 <input type="number" min={0} value={totalStudentsDraft} onChange={(e) => setTotalStudentsDraft(Number(e.target.value))} className="w-full rounded-xl border border-slate-200 px-3 py-2" />
               </Field>
 
-              <Field label="Requested rooms (min)" hint='0 = AUTO'>
+              <Field label="Requested rooms (min)" hint="0 = AUTO">
                 <input type="number" min={0} value={requestedRoomsDraft} onChange={(e) => setRequestedRoomsDraft(Number(e.target.value))} className="w-full rounded-xl border border-slate-200 px-3 py-2" />
               </Field>
 
@@ -1280,6 +1328,7 @@ if (loading) {
           </div>
         }
       >
+        {/* === your edit modal unchanged below === */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Field label="Course name">
             <input value={courseName} onChange={(e) => setCourseName(e.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2" />
