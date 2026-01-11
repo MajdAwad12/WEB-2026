@@ -93,7 +93,7 @@ if (process.env.NODE_ENV === "production") {
 
   // For React Router (SPA): return index.html for any unknown route
   // For React Router (SPA): return index.html for any unknown route
-app.get(/.*/, (req, res) => {
+app.get(/^(?!\/assets\/).*/, (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
 
